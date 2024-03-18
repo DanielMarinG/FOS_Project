@@ -1,0 +1,256 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FOS | FACTURA</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="icon" href="{% static 'img/logo1.ico'%}">
+    <script src="https://kit.fontawesome.com/37a7d1d6c8.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{% static 'css/styleinicio.css'%}">
+    <link rel="stylesheet" href="{% static 'css/stylemenulogoutlogin.css'%}">
+    <link rel="stylesheet" href="{% static 'css/factura.css' %}">
+</head>
+
+<body>
+    
+    <header class="header">
+        <div class="menu container">
+            <a href="{% url 'ventas' %}"><img class="logo-1" src="{% static 'img/logo1.png' %}" alt=" "></a>
+            <input type="checkbox" id="menu" />
+            <label for="menu">
+                <img src="{% static 'img/menu.png' %}" class="menu-icono" alt=" ">
+            </label>
+            <nav class="navbar">
+                <ul>
+                    <li><a style="text-decoration: none;" href="{% url 'ventas' %}"> <i class="fa-solid fa-shop"></i> Seguir Comprando</a></li>
+                </ul>
+
+            </nav>
+            <div>
+                <ul>
+                    <nav class="navbar">
+                        <ul>
+                            {% if user.is_authenticated %}
+                            <li class="custom-dropdown" style="display: inline-block;">
+                                <a style="text-decoration: none;" class="custom-dropbtn"><i class="fa-solid fa-user" style="transform: translateX(-2vh);"></i>{{ user.username|capfirst}}</a>
+                                <div class="custom-dropdown-content">
+                                    <a style="text-decoration: none;" href="{% url 'salir' %}" class="custom-menu-item">  Salir <i class="fa-solid fa-right-from-bracket" style="position: absolute; font-size: 1.6rem; top: 19px; right: 8px;"></i></a>
+                                    <a style="text-decoration: none;" href="#" class="custom-menu-item" data-toggle="modal"
+                                        data-target="#configuracionModal">Configuración</a>
+
+                                    {% if user.is_staff %}
+                                    <a style="text-decoration: none;" href="{% url 'domiciliosloa'%}" class="custom-menu-item">  Domicilios </a>
+                                    <a style="text-decoration: none;" href="{% url 'admin:index' %}" class="custom-menu-item">Administrador </a>
+                                    {% else %}
+                                    {% for group in user.groups.all %}
+                                    {% if group.name == 'Empleados' %}
+                                    <a style="text-decoration: none;" href="{%url 'domiciliosloa'%}" class="custom-menu-item">Domicilios  </a>
+                                    {% endif %}
+                                    {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </li>
+                            {% else %}
+                            <li><a style="text-decoration: none;" href="{% url 'loading' %}">Iniciar sesión</a></li>
+                            {% endif %}
+
+                            <!-- Modal -->
+                            <div class="modal fade" id="configuracionModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                            aria-hidden="true" style="color: white;">
+                            <div class="modal-dialog" role="document"
+                                style="box-shadow: 0px 5px 10px 5px #3da9fc; border-radius: 20px; overflow: hidden;">
+                                <div class="modal-content"
+                                    style="background-color: rgba(15, 14, 23, 0.8); backdrop-filter: blur(1px); border-radius: 20px;">
+                                    <div class="modal-header">
+                                            <h5 class="modal-title" id="configuracionModalLabel">   Configuración</h5>
+                                            <button type="button" style="color: white;" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="modal-body">
+                                                <h6>Cambiar Idioma:</h6>
+                                                <form>
+                                                    <div class="form-group">
+                                                        <label for="idiomaSelect">Selecciona un idioma:</label>
+                                                        <select class="form-control" id="idiomaSelect">
+                                                            <option value="es">Español</option>
+                                                            <option value="en">Inglés</option>
+                                                        </select>
+                                                    </div>
+                                                    <button type="button" class="btn btn-primary">Guardar
+                                                        Cambios</button>
+                                                </form>
+
+                                                <hr>
+
+                                                <h6>Cambiar Color de Página:</h6>
+                                                <form>
+                                                    <div class="form-group">
+                                                        <label for="colorSelect">Selecciona un color:</label>
+                                                        <select class="form-control" id="colorSelect">
+                                                            <option value="blue">Azul</option>
+                                                            <option value="green">Verde</option>
+                                                        </select>
+                                                    </div>
+                                                    <button type="button" class="btn btn-primary">Guardar
+                                                        Cambios</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-danger"
+                                                data-dismiss="modal">Cerrar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </ul>
+                    </nav>
+                </ul>
+            </div>
+    </header>
+    <section>
+        <div class="factura">
+            <h4>1. IDENTIFICACIÓN</h4>
+            <br>
+            <button id="showIdentificationForm" class="button1">Identificacion</button>
+            <br>
+            <div id="identificationForm" class="section" style="display: none;">
+                <form id="identification-form">
+                    <br>
+                    <label for="email">Correo:</label>
+                    <input type="email" id="email" name="email" required>
+                    <label for="name">Nombre:</label>
+                    <input type="text" id="name" name="name" required>
+                    <label for="last_name">Apellidos:</label>
+                    <input type="text" id="last_name" name="last_name" required>
+                    <label for="id_number">Cédula de ciudadanía o extranjería:</label>
+                    <input type="text" id="id_number" name="id_number" required>
+                    <label for="phone_number">Teléfono/Móvil:</label>
+                    <input type="tel" id="phone_number" name="phone_number" required>
+                </form>
+            </div>
+        </div>
+    </section>
+    
+    <section>
+        <div class="factura">
+            <h4>2. ENVIO</h4>
+            <br>
+            <button id="showShippingForm" class="button1">Envio</button>
+            <br>
+            <div id="shippingForm" class="section" style="display: none;">
+                <br>
+                    <select id="delivery-method" name="delivery-method" required>
+                        <option value="estandar" selected>Departamento - Bogota D,C</option>
+                        <option value="estandar">Departamento - Boyaca</option>
+                        <option value="estandar">Departamento - Quindio</option>
+                        <option value="estandar">Departamento - Risaralda</option>
+                    </select>
+                    <br>
+                    <br>
+                    <label for="city">Municipio:</label>
+                    <input type="text" id="city" name="city" value="Bogotá, D.c." required>
+                    <label for="neighborhood">Barrio:</label>
+                    <input type="text" id="neighborhood" name="neighborhood">
+                    <label for="complement">Dirección Complementa:</label>
+                    <input type="text" id="complement" name="complement">
+                    <label for="additional">Información adicional (ej.: apto. 201):</label>
+                    <input type="text" id="additional" name="additional">
+                    <label for="delivery">Destinatario:</label>
+                    <input type="text" id="delivery" name="delivery" value="David Vargas" required>
+                    <label for="delivery-method">Método de entrega:</label>
+                    <select id="delivery-method" name="delivery-method" required>
+                        <option value="estandar" selected>Envío Estándar - En hasta 2 días hábiles</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+    </section>
+    
+    <section>
+        <div class="factura">
+            <h4>3. PAGO</h4>
+            <br>
+            <button id="showPaymentForm" class="button1">Pago</button>
+            <br>
+            <div id="paymentForm" class="section" style="display: none;">
+                <form id="payment-form">
+                    <br>
+                    <label for="card-type">Tarjeta de crédito</label>
+                <input type="radio" id="card-type" name="payment-method" value="card" required>
+                <br>
+                <label for="card-number">Número:</label>
+                <input type="text" id="card-number" name="card-number" required>
+                <label for="quota">Cuotas disponibles:</label>
+                <select id="delivery-method" name="delivery-method">
+                    <option value="1" selected>1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                </select>
+                <br>
+                <br>
+                <label for="card-name">Nombre y Apellido como figura en la tarjeta:</label>
+                <input type="text" id="card-name" name="card-name" required>
+                <label for="expiration-date">Fecha de Vencimiento:</label>
+                <input type="text" id="expiration-date" name="expiration-date" required>
+                <label for="security-code">Código de Seguridad:</label>
+                <input type="text" id="security-code" name="security-code" required>
+                <button id="showPaymentForm" class="button1">Finañizar Compra</button>
+                </form>
+            </div>
+        </div>
+    </section>
+    
+    
+    <footer class="footer container" style="padding: 0; height: 25vh;">
+        <img class="logo-2" src="{% static 'img/logo1.png' %}" alt="">
+
+
+        <div class="links" style="display: flex;
+        flex-direction: row;
+        align-items: center;">
+
+            <div class="socials" style="display: flex;
+            flex-direction: row;
+            align-items: center; transform: translate(20vh, -10vh);">
+                <a href="#">
+                    <div class="social" style="margin: 0 10px;">
+                        <img src="{% static 'img/whatsapp.png' %}" alt="">
+                    </div>
+                </a>
+                <a href="#">
+                    <div class="social" style="margin: 0 10px;">
+                        <img src="{% static 'img/facebook.png' %}" alt="">
+                    </div>
+                </a>
+                <a href="#">
+                    <div class="social" style="margin: 0 10px;">
+                        <img src="{% static 'img/instagram.png' %}" alt="">
+                    </div>
+                </a>
+                <p style="color: white; transform: translateY(1.5vh);">&copy; 2023 FOS. Todos los derechos reservados.
+                </p>
+            </div>
+        </div>
+    </footer>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="{% static 'js/factura.js' %}"></script>
+</body>
+
+
+</html>
+

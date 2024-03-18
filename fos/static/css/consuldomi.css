@@ -1,0 +1,5 @@
+@media screen and (max-width: 991px) {
+    .footer-container{
+        transform: translateY(50vh);
+    }
+}

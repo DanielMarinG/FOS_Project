@@ -1,0 +1,729 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://kit.fontawesome.com/37a7d1d6c8.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <title>FOS | VENTAS</title>
+    <link rel="icon" href="{% static 'img/logo1.ico'%}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="{% static 'css/ventas.css' %}">
+    <link rel="stylesheet" href="{% static 'css/stylemenulogoutlogin.css'%}">
+
+
+</head>
+
+<body>
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-success" role="alert" id="successMessage"
+        style="max-width: 50%;  transform: translate(60vh, 10vh); ">
+        {{ message }}
+    </div>
+    {% endfor %}
+
+    <script>
+        // Agregar un timeout de 2 segundos (2000 milisegundos)
+        setTimeout(function () {
+            var successMessage = document.getElementById('successMessage');
+            if (successMessage) {
+                successMessage.style.display = 'none';
+            }
+        }, 2000);
+    </script>
+    {% endif %}
+    <header class="header">
+        <div class="menu container">
+            <a href="{% url 'ventas' %}"><img src="{% static 'img/logo1.png' %}" id="logo" alt=""></a>
+
+            <input type="checkbox" id="menu">
+            <label for="menu"><img src="{% static 'img/menu.png' %}" class="menu-icono" alt=""></label>
+            <nav class="navbar">
+                <ul>
+                    <li><a href="{% url 'contactopg'%}" style="z-index: 1;"><i class="fa-solid fa-phone"></i>
+                            Contactanos</a></li>
+                    <li><a href="{% url 'servicios'%}"><i class="fa-solid fa-group-arrows-rotate"></i> Nuestros
+                            Servicios</a></li>
+                </ul>
+            </nav>
+            <nav class="navbar" style=" transform: translateX(20vh);">
+                <ul>
+                    {% if user.is_authenticated %}
+                    <li class="custom-dropdown" style="display: inline-block;">
+                        <a style="text-decoration: none;" class="custom-dropbtn"><i class="fa-solid fa-user"
+                                style="transform: translateX(-2vh);"></i>{{ user.username|capfirst}}</a>
+                        <div class="custom-dropdown-content">
+                            <a style="text-decoration: none;" href="{% url 'salir' %}" class="custom-menu-item"> Salir
+                                <i class="fa-solid fa-right-from-bracket"
+                                    style="position: absolute; font-size: 1.6rem; top: 19px; right: 8px;"></i></a>
+                            <a style="text-decoration: none;" href="#" class="custom-menu-item" data-toggle="modal"
+                                data-target="#configuracionModal">Configuración</a>
+
+                            {% if user.is_staff %}
+                            <a style="text-decoration: none;" href="{% url 'domicilios'%}" class="custom-menu-item">
+                                Domicilios </a>
+                            <a style="text-decoration: none;" href="{% url 'admin:index' %}"
+                                class="custom-menu-item">Administrador </a>
+                            <a style="text-decoration: none;" href="#" class="custom-menu-item" data-toggle="modal"
+                                data-target="#pdfModal">PDF</a>
+                            {% else %}
+                            {% for group in user.groups.all %}
+                            {% if group.name == 'Empleados' %}
+                            <a style="text-decoration: none;" href="{%url 'domiciliosloa'%}"
+                                class="custom-menu-item">Domicilios </a>
+                            <a style="text-decoration: none;" href="{%url 'admin:index'%}"
+                                class="custom-menu-item">Administrador </a>
+                            <a style="text-decoration: none;" href="#" class="custom-menu-item" data-toggle="modal"
+                                data-target="#pdfModal">PDF</a>
+                            {% endif %}
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% else %}
+                    <li><a style="text-decoration: none;" href="{% url 'loading' %}">Iniciar sesión</a></li>
+                    {% endif %}
+
+
+
+                </ul>
+
+
+            </nav>
+            <div>
+                <ul>
+                    <li class="submenu">
+                        <i class="fa-solid fa-cart-shopping" style="cursor: pointer;" id="img-carrito"></i>
+                        <div id="carrito">
+                            <table id="lista-carrito">
+                                <thead>
+                                    <tr>
+                                        <th>Imagen</th>
+                                        <th>Nombre</th>
+                                        <th>Precio</th>
+                                        <th>Cantidad</th>
+                                        <th>subtotal</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                            <div id="total-container">
+                                <p>Total: <span id="total">0</span></p>
+                            </div>
+                            <a href="#" id="vaciar-carrito" class="btn-3">Vaciar Carrito</a>
+                            <a href="#" id="Pagar" class="btn-3">Pagar</a>
+                            <div id="mensaje" style="display: none;"></div>
+
+                            <script>
+                                document.getElementById('Pagar').addEventListener('click', function (event) {
+                                    var usuarioIniciadoSesion = {% if user.is_authenticated %} true {% else %} false {% endif %};
+
+                                if (usuarioIniciadoSesion) {
+                                    window.location.href = '{% url "factura" %}';
+                                } else {
+                                    mostrarMensaje(' <i class="fa-solid fa-circle-exclamation"></i> Debe iniciar sesión para continuar.', 1000);
+                                }
+
+                                event.preventDefault();
+                            });
+
+                                function mostrarMensaje(mensaje, tiempo) {
+                                    var mensajeDiv = document.getElementById('mensaje');
+                                    mensajeDiv.innerHTML = mensaje;
+                                    mensajeDiv.style.display = 'block';
+                                    mensajeDiv.style.backgroundColor = '#0f0e17';
+                                    mensajeDiv.style.padding = '10px';
+                                    mensajeDiv.style.borderRadius = '5px';
+                                    mensajeDiv.style.position = 'fixed';
+                                    mensajeDiv.style.top = '10px';
+                                    mensajeDiv.style.left = '50%';
+                                    mensajeDiv.style.transform = 'translateX(-85vh)';
+                                    mensajeDiv.style.zIndex = '9999';
+                                    mensajeDiv.style.borderLeft = '1px solid #3da9fc';
+                                    mensajeDiv.style.borderRight = '1px solid #3da9fc';
+                                    mensajeDiv.style.borderBottom = '2px solid #3da9fc';
+                                    mensajeDiv.style.borderTop = '0.5px solid #3da9fc';
+                                    mensajeDiv.style.boxShadow = '0 4px 8px #3da9fc, 0 6px 20px #3da9fc';
+                                    mensajeDiv.style.color = '#ffffff';
+                                    mensajeDiv.style.height = '70px';
+                                    mensajeDiv.style.marginTop = '-30px';
+                                    mensajeDiv.style.overflow = 'hidden';
+                                    mensajeDiv.style.textAlign = 'center';
+
+                                    setTimeout(function () {
+                                        mensajeDiv.style.display = 'none';
+                                    }, tiempo);
+                                }
+                            </script>
+
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="header-content container">
+
+            <div class="swiper mySwiper-1">
+                <div class="swiper-wrapper">
+                    <div class="swiper-slide">
+                        <div class="header-info">
+                            <div class="header-txt">
+                                <h1>JUGUETES PREMIUM - 50% OFF</h1>
+                                <div class="prices">
+                                    <p class="price-1">$100.000</p>
+                                    <p class="price-2">$50.000</p>
+                                </div>
+                                <a href="#" class="btn-1">Saber mas</a>
+                            </div>
+                            <div class="header-img">
+                                <img src="{% static 'img/oso.png' %}" alt="">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="swiper-slide">
+                        <div class="header-info">
+                            <div class="header-txt">
+                                <h1>PIÑATAS TEMATICAS - 20% OFF</h1>
+                                <div class="prices">
+                                    <p class="price-1">$199.999</p>
+                                    <p class="price-2">$159.999</p>
+                                </div>
+                                <a href="#" class="btn-1">Saber mas</a>
+                            </div>
+                            <div class="header-img">
+                                <img src="{% static 'img/pinata.png' %}" alt="">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="swiper-slide">
+                        <div class="header-info">
+                            <div class="header-txt">
+                                <h1>CAJAS PREDISEÑADAS - 35% OFF</h1>
+                                <div class="prices">
+                                    <p class="price-1">$150.000</p>
+                                    <p class="price-2">$100.000</p>
+                                </div>
+                                <a href="#" class="btn-1">Saber mas</a>
+                            </div>
+                            <div class="header-img">
+                                <img src="{% static 'img/cajaregalo.png' %}" alt="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-button-next"></div>
+                <div class="swiper-button-prev"></div>
+                <div class="swiper-pagination"></div>
+            </div>
+        </div>
+
+    </header>
+
+    <hr>
+
+    <section class="seccion-1">
+        <section class="promos container" id="lista-1">
+            <h2>PROMOCIONES</h2>
+            <div class="categories">
+                <div class="categorie">
+                    <div class="categorie-1">
+                        <h3>Promo 1</h3>
+                        <div class="prices">
+                            <p class="price-1">$200.000</p>
+                            <p class="precio">$149.999</p>
+                        </div>
+                        <div class="quantity">
+                            <button class="subtract">-</button>
+                            <input type="text" class="quantity-input" value="1">
+                            <button class="add">+</button>
+                        </div>
+                        <a href="#" class="agregar-carrito btn-3" data-id="1">Agregar al Carrito</a>
+                    </div>
+                    <div class="categorie-img">
+                        <img src="{% static 'img/robot.png' %}" alt="">
+                    </div>
+                </div>
+
+                <div class="categorie">
+                    <div class="categorie-1">
+                        <h3>Promo 2</h3>
+                        <div class="prices">
+                            <p class="price-1">$100.000</p>
+                            <p class="precio">$49.999</p>
+                        </div>
+                        <div class="quantity">
+                            <button class="subtract">-</button>
+                            <input type="text" class="quantity-input" value="1">
+                            <button class="add">+</button>
+                        </div>
+                        <a href="#" class="agregar-carrito btn-3" data-id="2">Agregar al Carrito</a>
+                    </div>
+                    <div class="categorie-img">
+                        <img src="{% static 'img/tren.png' %}" alt="">
+                    </div>
+                </div>
+
+                <div class="categorie">
+                    <div class="categorie-1">
+                        <h3>Promo 3</h3>
+                        <div class="prices">
+                            <p class="price-1">$50.000</p>
+                            <p class="precio">$24.999</p>
+                        </div>
+                        <div class="quantity">
+                            <button class="subtract">-</button>
+                            <input type="text" class="quantity-input" value="1">
+                            <button class="add">+</button>
+                        </div>
+                        <a href="#" class="agregar-carrito btn-3" data-id="3">Agregar al Carrito</a>
+                    </div>
+                    <div class="categorie-img">
+                        <img src="{% static 'img/bloques.png' %}" alt="">
+                    </div>
+                </div>
+
+                <div class="categorie">
+                    <div class="categorie-1">
+                        <h3>Promo 4</h3>
+                        <div class="prices">
+                            <p class="price-1">$300.000</p>
+                            <p class="precio">$249.999</p>
+                        </div>
+                        <div class="quantity">
+                            <button class="subtract">-</button>
+                            <input type="text" class="quantity-input" value="1">
+                            <button class="add">+</button>
+                        </div>
+                        <a href="#" class="agregar-carrito btn-3" data-id="4">Agregar al Carrito</a>
+                    </div>
+                    <div class="categorie-img">
+                        <img src="{% static 'img/oso.png' %}" alt="">
+                    </div>
+                </div>
+            </div>
+        </section>
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const categories = document.querySelectorAll(".categorie");
+                categories.forEach(category => {
+                    const quantityInput = category.querySelector(".quantity-input");
+                    const subtractButton = category.querySelector(".subtract");
+                    const addButton = category.querySelector(".add");
+
+                    subtractButton.addEventListener("click", () => {
+                        let quantity = parseInt(quantityInput.value);
+                        if (quantity > 1) {
+                            quantityInput.value = quantity - 1;
+                        }
+                    });
+
+                    addButton.addEventListener("click", () => {
+                        let quantity = parseInt(quantityInput.value);
+                        quantityInput.value = quantity + 1;
+                    });
+                });
+            });
+        </script>
+
+    </section>
+
+    <hr>
+
+    <section class="products container" id="lista-2">
+        <h2 class="titulo-1">NUEVOS PRODUCTOS</h2>
+        <div class="swiper mySwiper-2">
+            <div class="swiper-wrapper">
+                <div class="swiper-slide">
+                    <div class="product">
+                        <img src="{% static 'img/dinosaurio.png' %}" alt="">
+                        <div class="product-txt">
+                            <h3>Juguete</h3>
+                            <p>calidad Premium</p>
+                            <p class="precio">$200</p>
+                            <div class="quantity">
+                                <button class="subtract">-</button>
+                                <input type="text" class="quantity-input" value="1">
+                                <button class="add">+</button>
+                            </div>
+                            <a href="#" class="agregar-carrito btn-3" data-id="5">Agregar al Carrito</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="product">
+                        <img src="{% static 'img/dinosaurio.png' %}" alt="">
+                        <div class="product-txt">
+                            <h3>Juguete</h3>
+                            <p>Calidad Premium</p>
+                            <p class="precio">$200</p>
+                            <div class="quantity">
+                                <button class="subtract">-</button>
+                                <input type="text" class="quantity-input" value="1">
+                                <button class="add">+</button>
+                            </div>
+                            <a href="#" class="agregar-carrito btn-3" data-id="6">Agregar al Carrito</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="product">
+                        <img src="{% static 'img/dinosaurio.png' %}" alt="">
+                        <div class="product-txt">
+                            <h3>Juguete</h3>
+                            <p>Calidad Premium</p>
+                            <p class="precio">$200</p>
+                            <div class="quantity">
+                                <button class="subtract">-</button>
+                                <input type="text" class="quantity-input" value="1">
+                                <button class="add">+</button>
+                            </div>
+                            <a href="#" class="agregar-carrito btn-3" data-id="7">Agregar al Carrito</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="product">
+                        <img src="{% static 'img/dinosaurio.png' %}" alt="">
+                        <div class="product-txt">
+                            <h3>Juguete</h3>
+                            <p>Calidad Premium</p>
+                            <p class="precio">$200</p>
+                            <div class="quantity">
+                                <button class="subtract">-</button>
+                                <input type="text" class="quantity-input" value="1">
+                                <button class="add">+</button>
+                            </div>
+                            <a href="#" class="agregar-carrito btn-3" data-id="8">Agregar al Carrito</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="swiper-button-next"></div>
+            <div class="swiper-button-prev"></div>
+        </div>
+    </section>
+
+    <hr>
+
+    <section class="seccion-2">
+        <section class="products container" id="lista-3">
+            <h2 class="titulo-2">PRODUCTOS</h2>
+            <div class="swiper mySwiper-2">
+                <div class="swiper-wrapper">
+                    <div class="swiper-slide">
+                        <div class="product">
+                            <img src="{% static 'img/dinosaurio.png' %}" alt="">
+                            <div class="product-txt">
+                                <h3>Juguete</h3>
+                                <p>Calidad Premium</p>
+                                <p class="precio">$200</p>
+                                <div class="quantity">
+                                    <button class="subtract">-</button>
+                                    <input type="text" class="quantity-input" value="1">
+                                    <button class="add">+</button>
+                                </div>
+                                <a href="#" class="agregar-carrito btn-3" data-id="9">Agregar al Carrito</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="swiper-slide">
+                        <div class="product">
+                            <img src="{% static 'img/dinosaurio.png' %}" alt="">
+                            <div class="product-txt">
+                                <h3>Juguete</h3>
+                                <p>Calidad Premium</p>
+                                <p class="precio">$200</p>
+                                <div class="quantity">
+                                    <button class="subtract">-</button>
+                                    <input type="text" class="quantity-input" value="1">
+                                    <button class="add">+</button>
+                                </div>
+                                <a href="#" class="agregar-carrito btn-3" data-id="10">Agregar al Carrito</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="swiper-slide">
+                        <div class="product">
+                            <img src="{% static 'img/dinosaurio.png' %}" alt="">
+                            <div class="product-txt">
+                                <h3>Juguete</h3>
+                                <p>Calidad Premium</p>
+                                <p class="precio">$200</p>
+                                <div class="quantity">
+                                    <button class="subtract">-</button>
+                                    <input type="text" class="quantity-input" value="1">
+                                    <button class="add">+</button>
+                                </div>
+                                <a href="#" class="agregar-carrito btn-3" data-id="11">Agregar al Carrito</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="swiper-slide">
+                        <div class="product">
+                            <img src="{% static 'img/dinosaurio.png' %}" alt="">
+                            <div class="product-txt">
+                                <h3>Juguete</h3>
+                                <p>Calidad Premium</p>
+                                <p class="precio">$200</p>
+                                <div class="quantity">
+                                    <button class="subtract">-</button>
+                                    <input type="text" class="quantity-input" value="1">
+                                    <button class="add">+</button>
+                                </div>
+                                <a href="#" class="agregar-carrito btn-3" data-id="12">Agregar al Carrito</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-button-next"></div>
+                <div class="swiper-button-prev"></div>
+            </div>
+        </section>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                // Obtener referencia al elemento padre que contiene todos los botones
+                var contenedorBotones = document.body; // Puedes cambiar document.body al contenedor específico donde se encuentran tus botones
+
+                // Agregar un event listener al contenedor de botones
+                contenedorBotones.addEventListener('click', function (event) {
+                    // Verificar si el clic provino de un botón con la clase "agregar-carrito"
+                    if (event.target.classList.contains('agregar-carrito')) {
+                        // Evitar que el enlace redirija a otra página
+                        event.preventDefault();
+
+                        // Crear un elemento div para simular la alerta
+                        var alerta = document.createElement('div');
+                        alerta.className = 'alert';
+                        alerta.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>  Se agregó correctamente al carrito';
+                        alerta.style.backgroundColor = '#0f0e17';
+                        alerta.style.padding = '10px';
+                        alerta.style.borderRadius = '5px';
+                        alerta.style.position = 'fixed';
+                        alerta.style.top = '10px';
+                        alerta.style.left = '50%';
+                        alerta.style.transform = 'translateX(-50%)';
+                        alerta.style.zIndex = '9999';
+                        alerta.style.borderLeft = '1px solid #3da9fc';
+                        alerta.style.borderRight = '1px solid #3da9fc';
+                        alerta.style.borderBottom = '2px solid #3da9fc';
+                        alerta.style.borderTop = '0.5px solid #3da9fc';
+                        alerta.style.boxShadow = '0 4px 8px #3da9fc, 0 6px 20px #3da9fc';
+                        alerta.style.color = '#ffffff';
+
+                        // Agregar la alerta al cuerpo del documento
+                        document.body.appendChild(alerta);
+
+                        // Cerrar automáticamente la alerta después de 2 segundos (2000 milisegundos)
+                        setTimeout(function () {
+                            alerta.style.display = 'none';
+                        }, 1000);
+                    }
+                });
+            });
+            document.addEventListener("DOMContentLoaded", function () {
+                const products = document.querySelectorAll(".product");
+                products.forEach(product => {
+                    const quantityInput = product.querySelector(".quantity-input");
+                    const subtractButton = product.querySelector(".subtract");
+                    const addButton = product.querySelector(".add");
+
+                    subtractButton.addEventListener("click", () => {
+                        let quantity = parseInt(quantityInput.value);
+                        if (quantity > 1) {
+                            quantityInput.value = quantity - 1;
+                        }
+                    });
+
+                    addButton.addEventListener("click", () => {
+                        let quantity = parseInt(quantityInput.value);
+                        quantityInput.value = quantity + 1;
+                    });
+                });
+            });
+        </script>
+    </section>
+
+    <footer class="footer container">
+        <div class="link">
+            <h3>Horario de Atencion</h3>
+            <ul>
+                <a href="#">lunes a Viernes de 10:00 A.M a 8:00 P.M</a>
+                <a href="#">Sabados y Domingos de 11:00 A.M a 7:00 P.M </a>
+            </ul>
+        </div>
+        <div class="link">
+            <h3>Terminos y Condiciones</h3>
+            <ul>
+                {% include 'politicapriv.html' %}
+                <li></li><a style="text-decoration: none;" href="#"  data-toggle="modal"
+                data-target="#politicaprivModal">Politica de Privacidad</a></li>
+                <li><a style="text-decoration: none;" href="#"  data-toggle="modal"
+                    data-target="#termserviModal">Terminos de Servicios</a></li>
+            </ul>
+        </div>
+        <div class="link">
+            <h3>Informacion de la Empresa</h3>
+            <p>La piñatería Latinos es un lugar vibrante y lleno de color, donde la diversión y la creatividad se
+                fusionan para ofrecer una amplia variedad de piñatas y accesorios para fiestas. Desde piñatas clásicas
+                hasta diseños personalizados, esta tienda es el destino perfecto para cualquier celebración. Con su
+                ambiente acogedor y su selección de productos festivos, una visita a la piñatería promete una
+                experiencia llena de risas y recuerdos duraderos.</p>
+        </div>
+    </footer>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script>
+    <script src="{% static 'js/ventas.js' %}"></script>
+</body>
+
+</html>
+<!--Modal configuracion-->
+<div class="modal fade" id="configuracionModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+    aria-hidden="true" style="color: white;">
+    <div class="modal-dialog" role="document"
+        style="box-shadow: 0px 5px 10px 5px #3da9fc; border-radius: 20px; overflow: hidden;">
+        <div class="modal-content"
+            style="background-color: rgba(15, 14, 23, 0.8); backdrop-filter: blur(1px); border-radius: 20px;">
+            <div class="modal-header">
+                <h5 class="modal-title" id="configuracionModalLabel"> <i class="fa-solid fa-screwdriver-wrench"></i>
+                    Configuración</h5>
+                <button type="button" style="color: white;" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-body">
+                    <h6>Cambiar Idioma:</h6>
+                    <form>
+                        <div class="form-group">
+                            <label for="idiomaSelect">Selecciona un idioma:</label>
+                            <select class="form-control" id="idiomaSelect">
+                                <option value="es">Español</option>
+                                <option value="en">Inglés</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-primary save-button"> <i class="fa-solid fa-folder"></i>
+                            Guardar Cambios</button>
+                    </form>
+
+                    <hr>
+
+                    <h6>Cambiar Color de Página:</h6>
+                    <form>
+                        <div class="form-group">
+                            <label for="colorSelect">Selecciona un color: (desabilitado)</label>
+                            <select class="form-control" id="colorSelect">
+                                <option value="Dark" disabled>Oscuro</option>
+                                <option value="Clear" disabled>Claro</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-primary"> <i class="fa-solid fa-folder"></i> Guardar
+                            Cambios</button>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal"> <i class="fa-solid fa-xmark"></i>
+                    Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--Modal configuracion-->
+
+<!--Modal PDF-->
+<div class="modal fade" id="pdfModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true"
+    style="color: white;">
+    <div class="modal-dialog" role="document"
+        style="box-shadow: 0px 5px 10px 5px #3da9fc; border-radius: 20px; overflow: hidden;">
+        <div class="modal-content"
+            style="background-color: rgba(15, 14, 23, 0.8); backdrop-filter: blur(1px); border-radius: 20px;">
+            <div class="modal-header">
+                <h5 class="modal-title" id="configuracionModalLabel"> <i class="fa-solid fa-file-pdf"></i>
+                    Generar PDF</h5>
+                <button type="button" style="color: white;" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-body">
+                    <h6 style="text-align: center;">Genera tu PDF:</h6>
+                    {% if user.is_authenticated %}
+                    <p>Tu grupo actual es:
+                        
+                            {% for group in user.groups.all %}
+                                {{ group.name }}
+                            {% endfor %}
+                        
+                    </p>
+                    {% if user.is_staff %}
+                    <a href="{% url 'export_domicile' %}" target="_blank"><button class="btn btn-success"
+                            style="margin-right: 60px;">Domicilios</button></a>
+                    <a href="{% url 'admin:index' %}" target="_blank"><button class="btn btn-success"
+                            style="margin-right: 60px">Inventario</button></a>
+                    <a href="#" target="_blank"><button class="btn btn-success">Venta</button></a>
+                    {% else %}
+                    {% for group in user.groups.all %}
+                    {% if group.name == 'Empleados' %}
+                    <a href="{% url 'export_domicile' %}" target="_blank"><button
+                            class="btn btn-success">Domicilios</button></a>
+                        
+                    {% endif %}
+                    {% endfor %}
+                    {% endif %}
+                    <br><br>
+                    <p>Nota: Dependiendo tu grupo, los botones tendran permisos</p>
+                </div>
+                </li>
+                {% else %}
+                <li><a style="text-decoration: none;" href="{% url 'loading' %}">Iniciar sesión</a></li>
+                {% endif %}
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-danger" data-dismiss="modal"> <i class="fa-solid fa-xmark"></i>
+                Cerrar</button>
+        </div>
+    </div>
+</div>
+</div>
+<!--Modal PDF-->
+
+<script>
+    $(document).ready(function () {
+        // Manejar el cambio en el idioma seleccionado dentro del formulario
+        $('#idiomaSelect').change(function () {
+            // Obtener el valor del idioma seleccionado
+            var selectedLanguage = $(this).val();
+
+            // Guardar el idioma seleccionado en el almacenamiento local
+            localStorage.setItem('selectedLanguage', selectedLanguage);
+
+            // Recargar la página
+            location.reload();
+        });
+
+        // Manejar el clic en el botón
+        $('.save-button').click(function () {
+            // Realizar acciones cuando se hace clic en el botón
+            console.log('Botón clickeado');
+            // Puedes agregar lógica adicional aquí
+        });
+    });
+
+    // Al cargar la página, establecer el idioma seleccionado si existe en el almacenamiento local
+    $(window).on('load', function () {
+        var selectedLanguage = localStorage.getItem('selectedLanguage');
+        if (selectedLanguage) {
+            $('#idiomaSelect').val(selectedLanguage);
+        }
+    });
+</script>
